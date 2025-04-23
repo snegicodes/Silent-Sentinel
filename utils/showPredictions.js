@@ -1,5 +1,26 @@
 import {throttle} from "lodash";
 
+// throttled version of the email notification system to prevent spam
+const sendEmailNotification = throttle(async () => {
+  try {
+    const response = await fetch('/api/notify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: 'Person detected in your house!'
+      }),
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to send notification');
+    }
+  } catch (error) {
+    console.error('Error sending notification:', error);
+  }
+}, 120000); // Only allow one email per 2 minutes
+
 export const showPredictions = (predictions, ctx) => {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -19,6 +40,11 @@ export const showPredictions = (predictions, ctx) => {
     const [x, y, width, height] = prediction["bbox"];
 
     const isPerson = prediction.class === "person";
+
+    // If a person is detected, send email notification
+    if (isPerson) {
+      sendEmailNotification();
+    }
 
     // bounding box
     ctx.strokeStyle = isPerson ? "#FF0000" : "#00FFFF";

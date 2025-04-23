@@ -32,7 +32,7 @@ const ObjectDetection = () => {
 
     detectInterval = setInterval(() => {
       runObjectDetection(net);
-    }, 10);
+    }, 100);
   };
 
   const runObjectDetection = async (net) => {
