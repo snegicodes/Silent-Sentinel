@@ -3,6 +3,7 @@ import { load as cocoSSDLoad } from "@tensorflow-models/coco-ssd";
 import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import * as tf from "@tensorflow/tfjs";
+import { showPredictions } from "@/utils/showPredictions";
 
 const ObjectDetection = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +48,7 @@ const ObjectDetection = () => {
             const detectedObjects = await net.detect(webCamRef.current.video, undefined, 0.3);
 
             const context = canvasRef.current.getContext("2d");
+            showPredictions(detectedObjects, context);
       }
   }
 
