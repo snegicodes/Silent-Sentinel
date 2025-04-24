@@ -1,7 +1,19 @@
 import nodemailer from 'nodemailer';
 
-export async function POST() {
+export async function POST(request) {
   try {
+    const body = await request.json();
+    const { email } = body;
+
+    if (!email) {
+      return new Response(JSON.stringify({ error: 'Email is required' }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -12,7 +24,7 @@ export async function POST() {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_TO,
+      to: email,
       subject: 'Security Alert: Person Detected',
       text: 'A person has been detected in your house by the security system.',
       html: '<h1>Security Alert</h1><p>A person has been detected in your house by the security system.</p>',
