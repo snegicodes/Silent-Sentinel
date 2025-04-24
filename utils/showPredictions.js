@@ -1,7 +1,7 @@
 import {throttle} from "lodash";
 
 // throttled version of the email notification system to prevent spam
-const sendEmailNotification = throttle(async (email) => {
+const sendEmailNotification = throttle(async (email, screenshot) => {
   try {
     const response = await fetch('/api/notify', {
       method: 'POST',
@@ -10,7 +10,8 @@ const sendEmailNotification = throttle(async (email) => {
       },
       body: JSON.stringify({
         message: 'Person detected in your house!',
-        email: email
+        email: email,
+        screenshot: screenshot
       }),
     });
     
@@ -22,7 +23,7 @@ const sendEmailNotification = throttle(async (email) => {
   }
 }, 120000); // Only allow one email per 2 minutes
 
-export const showPredictions = (predictions, ctx, email) => {
+export const showPredictions = (predictions, ctx, email, webcamRef) => {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   // Save the current context state
@@ -37,14 +38,16 @@ export const showPredictions = (predictions, ctx, email) => {
   ctx.font = font;
   ctx.textBaseline = "top";
 
+  let personDetected = false;
+
   predictions.forEach((prediction) => {
     const [x, y, width, height] = prediction["bbox"];
 
     const isPerson = prediction.class === "person";
 
-    // If a person is detected, send email notification
-    if (isPerson && email) {
-      sendEmailNotification(email);
+    // Check if a person is detected
+    if (isPerson) {
+      personDetected = true;
     }
 
     // bounding box
@@ -70,6 +73,14 @@ export const showPredictions = (predictions, ctx, email) => {
     ctx.translate(x * 2 + textWidth + 4, 0);
     ctx.scale(-1, 1);
   });
+
+  // If a person is detected, send email notification with screenshot
+  if (personDetected && email && webcamRef) {
+    // Capture screenshot from webcam
+    const screenshot = webcamRef.current.getScreenshot();
+    // Send email with screenshot
+    sendEmailNotification(email, screenshot);
+  }
 
   // Restore the context state
   ctx.restore();
