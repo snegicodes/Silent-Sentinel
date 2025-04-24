@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const { email, screenshot } = body;
 
     if (!email) {
       return new Response(JSON.stringify({ error: 'Email is required' }), {
@@ -22,13 +22,40 @@ export async function POST(request) {
       },
     });
 
+    // Create the HTML content
+    let htmlContent = '<h1>Security Alert</h1><p>A person has been detected in your house by the security system.</p>';
+    
+    // Email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Security Alert: Person Detected',
       text: 'A person has been detected in your house by the security system.',
-      html: '<h1>Security Alert</h1><p>A person has been detected in your house by the security system.</p>',
+      html: htmlContent,
+      attachments: [],
     };
+
+    // Add screenshot as attachment if available
+    if (screenshot) {
+      // Extract the base64 data from the data URL (removing the prefix like "data:image/png;base64,")
+      const matches = screenshot.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      
+      if (matches && matches.length === 3) {
+        const imageType = matches[1];
+        const base64Data = matches[2];
+        const fileExtension = imageType.split('/')[1] || 'png';
+        
+        mailOptions.attachments.push({
+          filename: `detection-${new Date().toISOString()}.${fileExtension}`,
+          content: base64Data,
+          encoding: 'base64',
+        });
+        
+        // Add a note about the attachment
+        htmlContent += '<p>Please see the attached screenshot of the detected person.</p>';
+        mailOptions.html = htmlContent;
+      }
+    }
 
     await transporter.sendMail(mailOptions);
 

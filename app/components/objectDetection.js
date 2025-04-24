@@ -51,7 +51,7 @@ const ObjectDetection = () => {
             const detectedObjects = await net.detect(webCamRef.current.video, undefined, 0.3);
 
             const context = canvasRef.current.getContext("2d");
-            showPredictions(detectedObjects, context, email);
+            showPredictions(detectedObjects, context, email, webCamRef);
       }
   }
 
