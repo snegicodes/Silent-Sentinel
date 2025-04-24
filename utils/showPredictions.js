@@ -1,7 +1,7 @@
 import {throttle} from "lodash";
 
 // throttled version of the email notification system to prevent spam
-const sendEmailNotification = throttle(async () => {
+const sendEmailNotification = throttle(async (email) => {
   try {
     const response = await fetch('/api/notify', {
       method: 'POST',
@@ -9,7 +9,8 @@ const sendEmailNotification = throttle(async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message: 'Person detected in your house!'
+        message: 'Person detected in your house!',
+        email: email
       }),
     });
     
@@ -21,7 +22,7 @@ const sendEmailNotification = throttle(async () => {
   }
 }, 120000); // Only allow one email per 2 minutes
 
-export const showPredictions = (predictions, ctx) => {
+export const showPredictions = (predictions, ctx, email) => {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   // Save the current context state
@@ -42,8 +43,8 @@ export const showPredictions = (predictions, ctx) => {
     const isPerson = prediction.class === "person";
 
     // If a person is detected, send email notification
-    if (isPerson) {
-      sendEmailNotification();
+    if (isPerson && email) {
+      sendEmailNotification(email);
     }
 
     // bounding box
